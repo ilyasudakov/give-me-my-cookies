@@ -174,15 +174,13 @@ class CookieTransferNotifications {
             message.notificationId,
             'success',
             'Cookies Transferred Successfully',
-            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`,
-            `Ready to use • ${window.location.host}`
+            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`
           );
         } else {
           this.showNotification(
             'success',
             'Cookies Transferred Successfully',
-            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`,
-            `Ready to use • ${window.location.host}`
+            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`
           );
         }
         
@@ -195,15 +193,13 @@ class CookieTransferNotifications {
             message.notificationId,
             'error',
             'Cookie Transfer Failed',
-            message.error || 'An error occurred during transfer',
-            `Check extension popup for details • ${window.location.host}`
+            message.error || 'An error occurred during transfer'
           );
         } else {
           this.showNotification(
             'error',
             'Cookie Transfer Failed',
-            message.error || 'An error occurred during transfer',
-            `Check extension popup for details • ${window.location.host}`
+            message.error || 'An error occurred during transfer'
           );
         }
         
