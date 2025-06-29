@@ -86,6 +86,7 @@ async function performAutoTransfer(localhostUrl) {
       await saveRecentTransfer({
         sourceCount: transferResult.sourceCount,
         totalCookies: transferResult.totalCookies,
+        skippedCookies: transferResult.totalSkipped || 0,
         timestamp: Date.now(),
         type: 'auto'
       });
@@ -93,11 +94,22 @@ async function performAutoTransfer(localhostUrl) {
       // Show success notification
       await sendNotificationToTabs('showTransferComplete', {
         totalCookies: transferResult.totalCookies,
+        copiedCookies: transferResult.totalCopied || 0,
+        updatedCookies: transferResult.totalUpdated || 0,
+        skippedCookies: transferResult.totalSkipped || 0,
         sourceCount: transferResult.sourceCount,
         notificationId: notificationResponse?.notificationId
       });
       
-      console.log(`Auto-transfer completed: ${transferResult.totalCookies} cookies from ${transferResult.sourceCount} sources`);
+      console.log(`Auto-transfer completed: ${transferResult.totalCookies} cookies transferred (${transferResult.totalCopied || 0} copied, ${transferResult.totalUpdated || 0} updated), ${transferResult.totalSkipped || 0} skipped from ${transferResult.sourceCount} sources`);
+    } else if (transferResult.success && transferResult.totalCookies === 0) {
+      // All cookies already existed - hide the loading notification but don't show success
+      if (notificationResponse?.notificationId) {
+        await sendNotificationToTabs('hideNotification', {
+          notificationId: notificationResponse.notificationId
+        });
+      }
+      console.log(`Auto-transfer completed: No cookies needed transfer, ${transferResult.totalSkipped || 0} already existed (${transferResult.totalCopied || 0} copied, ${transferResult.totalUpdated || 0} updated) from ${transferResult.sourceCount} sources`);
     } else {
       // Show error notification
       await sendNotificationToTabs('showTransferError', {
@@ -135,11 +147,12 @@ async function performManualTransfer() {
     
     const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl);
     
-    if (transferResult.success) {
+    if (transferResult.success && transferResult.totalCookies > 0) {
       // Save to recent transfers
       await saveRecentTransfer({
         sourceCount: transferResult.sourceCount,
         totalCookies: transferResult.totalCookies,
+        skippedCookies: transferResult.totalSkipped || 0,
         timestamp: Date.now(),
         type: 'manual'
       });
@@ -147,9 +160,19 @@ async function performManualTransfer() {
       // Show success notification
       await sendNotificationToTabs('showTransferComplete', {
         totalCookies: transferResult.totalCookies,
+        copiedCookies: transferResult.totalCopied || 0,
+        updatedCookies: transferResult.totalUpdated || 0,
+        skippedCookies: transferResult.totalSkipped || 0,
         sourceCount: transferResult.sourceCount,
         notificationId: notificationResponse?.notificationId
       });
+    } else if (transferResult.success && transferResult.totalCookies === 0) {
+      // All cookies already existed - hide the loading notification but don't show success
+      if (notificationResponse?.notificationId) {
+        await sendNotificationToTabs('hideNotification', {
+          notificationId: notificationResponse.notificationId
+        });
+      }
     } else {
       // Show error notification
       await sendNotificationToTabs('showTransferError', {
@@ -174,6 +197,9 @@ async function performManualTransfer() {
 async function transferFromMultipleSources(sourceUrls, targetUrl) {
   const results = [];
   let totalCookies = 0;
+  let totalCopied = 0;
+  let totalUpdated = 0;
+  let totalSkipped = 0;
   let successfulSources = 0;
   
   // Transfer from all sources in parallel for better performance
@@ -183,6 +209,9 @@ async function transferFromMultipleSources(sourceUrls, targetUrl) {
       results.push({ sourceUrl, result });
       if (result.success) {
         totalCookies += result.count;
+        totalCopied += result.copied || 0;
+        totalUpdated += result.updated || 0;
+        totalSkipped += result.skipped || 0;
         successfulSources++;
       }
       return result;
@@ -206,6 +235,9 @@ async function transferFromMultipleSources(sourceUrls, targetUrl) {
   const result = {
     success: true,
     totalCookies,
+    totalCopied,
+    totalUpdated,
+    totalSkipped,
     sourceCount: successfulSources,
     attempted: sourceUrls.length
   };
@@ -231,12 +263,33 @@ async function transferCookiesFromSource(sourceUrl, targetUrl) {
       return { success: false, error: `No cookies found for ${sourceHost}` };
     }
     
-    // Transfer cookies to target domain
-    let transferredCount = 0;
+    // Get existing cookies from target domain
+    const existingCookies = await chrome.cookies.getAll({ domain: targetHost });
+    
+    // Create a map of existing cookies for quick lookup
+    const existingCookieMap = new Map();
+    existingCookies.forEach(cookie => {
+      const key = `${cookie.name}:${cookie.path}`;
+      existingCookieMap.set(key, cookie);
+    });
+    
+    // Transfer only missing or different cookies
+    let copiedCount = 0;     // New cookies added
+    let updatedCount = 0;    // Existing cookies with different values
+    let skippedCount = 0;    // Cookies with same values
     const errors = [];
     
     for (const cookie of sourceCookies) {
       try {
+        const cookieKey = `${cookie.name}:${cookie.path || '/'}`;
+        const existingCookie = existingCookieMap.get(cookieKey);
+        
+        // Skip if cookie exists and has the same value
+        if (existingCookie && existingCookie.value === cookie.value) {
+          skippedCount++;
+          continue;
+        }
+        
         // Prepare cookie for localhost
         const newCookie = {
           url: targetUrl,
@@ -255,22 +308,38 @@ async function transferCookiesFromSource(sourceUrl, targetUrl) {
         }
         
         await chrome.cookies.set(newCookie);
-        transferredCount++;
+        
+        // Track whether this was copied (new) or updated (existing)
+        if (existingCookie) {
+          updatedCount++;
+          console.log(`Updated cookie ${cookie.name} (value changed)`);
+        } else {
+          copiedCount++;
+          console.log(`Added new cookie ${cookie.name}`);
+        }
+        
       } catch (error) {
         errors.push(`Failed to set cookie ${cookie.name}: ${error.message}`);
         console.error('Cookie transfer error:', error);
       }
     }
     
+    const transferredCount = copiedCount + updatedCount;
     const result = { 
       success: true, 
       count: transferredCount,
-      total: sourceCookies.length
+      total: sourceCookies.length,
+      skipped: skippedCount,
+      copied: copiedCount,
+      updated: updatedCount
     };
     
     if (errors.length > 0) {
       result.warnings = errors;
     }
+    
+    // Log summary
+    console.log(`Cookie transfer summary: ${copiedCount} copied, ${updatedCount} updated, ${skippedCount} skipped, ${sourceCookies.length} total from ${sourceHost}`);
     
     return result;
     
@@ -282,6 +351,9 @@ async function transferCookiesFromSource(sourceUrl, targetUrl) {
 
 async function clearLocalhostCookies() {
   try {
+    // Show clear start notification
+    const notificationResponse = await sendNotificationToTabs('showClearStart', {});
+    
     // Clear cookies from common localhost domains
     const localhostDomains = ['localhost', '127.0.0.1'];
     let totalCleared = 0;
@@ -318,10 +390,23 @@ async function clearLocalhostCookies() {
       result.warnings = errors;
     }
     
+    // Show success notification
+    await sendNotificationToTabs('showClearComplete', {
+      count: totalCleared,
+      notificationId: notificationResponse?.notificationId
+    });
+    
     return result;
     
   } catch (error) {
     console.error('Clear localhost cookies error:', error);
+    
+    // Show error notification
+    await sendNotificationToTabs('showClearError', {
+      error: error.message || 'An unexpected error occurred',
+      notificationId: notificationResponse?.notificationId
+    });
+    
     return { success: false, error: error.message };
   }
 }

@@ -94,7 +94,7 @@ class CookieTransferNotifications {
     // Create message
     const messageElement = document.createElement('div');
     messageElement.className = 'notification-message';
-    messageElement.textContent = message;
+    messageElement.innerHTML = message;
 
     // Assemble notification
     notification.appendChild(header);
@@ -161,7 +161,6 @@ class CookieTransferNotifications {
           'loading',
           'Cookie Transfer Started',
           `Copying cookies from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}...`,
-          `${message.type === 'auto' ? 'Auto-transfer' : 'Manual transfer'} • ${window.location.host}`,
           false // Don't auto-hide loading notifications
         );
         
@@ -169,18 +168,28 @@ class CookieTransferNotifications {
       }
       
       if (message.action === 'showTransferComplete') {
+        const { totalCookies, copiedCookies = 0, updatedCookies = 0, skippedCookies = 0, sourceCount } = message;
+        
+        // Create detailed stats message with colors (excluding skipped)
+        const stats = [];
+        if (copiedCookies > 0) stats.push(`<span class="stat-copied">${copiedCookies} added</span>`);
+        if (updatedCookies > 0) stats.push(`<span class="stat-updated">${updatedCookies} updated</span>`);
+        
+        const statsText = stats.length > 0 ? `${stats.join(', ')}` : '';
+        const successMessage = `${totalCookies} cookies (${statsText}) from ${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+        
         if (message.notificationId) {
           this.updateNotification(
             message.notificationId,
             'success',
             'Cookies Transferred Successfully',
-            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`
+            successMessage
           );
         } else {
           this.showNotification(
             'success',
             'Cookies Transferred Successfully',
-            `${message.totalCookies} cookies copied from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}`
+            successMessage
           );
         }
         
@@ -200,6 +209,68 @@ class CookieTransferNotifications {
             'error',
             'Cookie Transfer Failed',
             message.error || 'An error occurred during transfer'
+          );
+        }
+        
+        sendResponse({ success: true });
+      }
+      
+      if (message.action === 'hideNotification') {
+        if (message.notificationId) {
+          this.hideNotification(message.notificationId);
+        }
+        
+        sendResponse({ success: true });
+      }
+      
+      // Clear cookies notifications
+      if (message.action === 'showClearStart') {
+        const notificationId = this.showNotification(
+          'loading',
+          'Clearing Local Cookies',
+          'Removing cookies from localhost...',
+          'Manual clear operation',
+          false // Don't auto-hide loading notifications
+        );
+        
+        sendResponse({ notificationId });
+      }
+      
+      if (message.action === 'showClearComplete') {
+        const { count } = message;
+        const successMessage = `${count} cookie${count !== 1 ? 's' : ''} cleared from localhost`;
+        
+        if (message.notificationId) {
+          this.updateNotification(
+            message.notificationId,
+            'success',
+            'Local Cookies Cleared',
+            successMessage
+          );
+        } else {
+          this.showNotification(
+            'success',
+            'Local Cookies Cleared',
+            successMessage
+          );
+        }
+        
+        sendResponse({ success: true });
+      }
+      
+      if (message.action === 'showClearError') {
+        if (message.notificationId) {
+          this.updateNotification(
+            message.notificationId,
+            'error',
+            'Clear Operation Failed',
+            message.error || 'An error occurred while clearing cookies'
+          );
+        } else {
+          this.showNotification(
+            'error',
+            'Clear Operation Failed',
+            message.error || 'An error occurred while clearing cookies'
           );
         }
         

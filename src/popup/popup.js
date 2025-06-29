@@ -191,9 +191,9 @@ document.addEventListener('DOMContentLoaded', function() {
     await chrome.storage.local.set({ isExtensionPaused: pauseExtensionToggle.checked });
     await chrome.runtime.sendMessage({
       action: 'updateAutoTransfer',
-      enabled: pauseExtensionToggle.checked
+      enabled: !pauseExtensionToggle.checked // Invert because checkbox is "Pause extension"
     });
-    showStatus(pauseExtensionToggle.checked ? 'Auto-transfer enabled' : 'Auto-transfer disabled', 'info');
+    showStatus(pauseExtensionToggle.checked ? 'Auto-transfer disabled' : 'Auto-transfer enabled', 'info');
   });
 
   // Add source URL
@@ -265,8 +265,13 @@ document.addEventListener('DOMContentLoaded', function() {
         action: 'manualTransfer'
       });
 
-      if (result.success) {
-        showStatus(`Successfully transferred ${result.totalCookies} cookies from ${result.sourceCount} sources`, 'success');
+      if (result.success && result.totalCookies > 0) {
+        const transferMessage = `Successfully transferred ${result.totalCookies} cookies` + 
+          (result.totalSkipped > 0 ? ` (${result.totalSkipped} already existed)` : '') +
+          ` from ${result.sourceCount} sources`;
+        showStatus(transferMessage, 'success');
+      } else if (result.success && result.totalCookies === 0) {
+        showStatus(`All cookies already up to date (${result.totalSkipped || 0} already existed)`, 'info');
       } else {
         showStatus('Transfer failed: ' + result.error, 'error');
       }
@@ -274,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
       showStatus('Error: ' + error.message, 'error');
     } finally {
       manualTransferBtn.disabled = false;
-      manualTransferBtn.textContent = 'Manual Transfer Now';
+      manualTransferBtn.textContent = 'Run manual transfer';
     }
   });
 
@@ -298,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
       showStatus('Error: ' + error.message, 'error');
     } finally {
       clearBtn.disabled = false;
-      clearBtn.textContent = 'Clear Localhost Cookies';
+      clearBtn.textContent = 'Clear local cookies';
     }
   });
 }); 

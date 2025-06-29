@@ -139,4 +139,20 @@
 @keyframes indeterminate {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(400%); }
+}
+
+/* Colored statistics in notifications */
+.stat-copied {
+  color: #34a853;
+  font-weight: 600;
+}
+
+.stat-updated {
+  color: #4285f4;
+  font-weight: 600;
+}
+
+.stat-skipped {
+  color: #666;
+  font-weight: 500;
 } 

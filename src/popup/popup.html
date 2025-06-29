@@ -6,9 +6,9 @@
   </head>
   <body>
     <div class="container">
-      <!-- Add URL Section -->
       <div class="section">
-        <label for="newSourceUrl">Add a new URL:</label>
+        <span>Enabled URLs:</span>
+        <div id="sourcesList" class="sources-list"></div>
         <div class="input-group">
           <input
             type="text"
@@ -19,15 +19,9 @@
         </div>
       </div>
 
-      <!-- URLs List -->
       <div class="section">
-        <span>Enabled URLs:</span>
-        <div id="sourcesList" class="sources-list"></div>
-      </div>
-
-      <div class="section">
-        <button id="clearLocalhost">Clear Localhost Cookies</button>
-        <button id="manualTransfer">Manual Transfer Now</button>
+        <button id="clearLocalhost">Clear local cookies</button>
+        <button id="manualTransfer">Run manual transfer</button>
       </div>
       <div class="section">
         <div class="auto-transfer-toggle">
@@ -38,6 +32,8 @@
         </div>
       </div>
     </div>
+
+    <div id="status" class="status"></div>
 
     <script src="popup.js"></script>
   </body>
