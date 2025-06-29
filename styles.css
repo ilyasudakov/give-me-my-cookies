@@ -145,4 +145,104 @@ small {
 .transfer-details {
   margin-top: 3px;
   font-size: 11px;
+}
+
+.auto-transfer-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.auto-transfer-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.auto-transfer-toggle input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.input-group input {
+  flex: 1;
+}
+
+.input-group button {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.sources-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.source-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 5px 0;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #4285f4;
+}
+
+.source-item.disabled {
+  opacity: 0.6;
+  border-left-color: #ccc;
+}
+
+.source-url {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+  margin-right: 10px;
+  word-break: break-all;
+}
+
+.source-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.source-actions button {
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.source-actions button:hover {
+  background: #f1f3f4;
+}
+
+.source-actions button.danger {
+  color: #d93025;
+  border-color: #f9dedc;
+}
+
+.source-actions button.danger:hover {
+  background: #fce8e6;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
 } 

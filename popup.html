@@ -9,18 +9,31 @@
     <h2>Cookie Transfer Tool</h2>
     
     <div class="section">
-      <label for="sourceUrl">Source URL (Production):</label>
-      <input type="text" id="sourceUrl" placeholder="https://example.com">
-      <button id="detectSource">Use Current Tab</button>
+      <div class="auto-transfer-toggle">
+        <label for="autoTransferEnabled">
+          <input type="checkbox" id="autoTransferEnabled">
+          Auto-transfer cookies to localhost
+        </label>
+        <small>Automatically copy cookies when you visit localhost</small>
+      </div>
     </div>
     
     <div class="section">
-      <label for="targetUrl">Target URL (Localhost):</label>
-      <input type="text" id="targetUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+      <label for="newSourceUrl">Add Production URL:</label>
+      <div class="input-group">
+        <input type="text" id="newSourceUrl" placeholder="https://example.com">
+        <button id="detectSource">Current Tab</button>
+        <button id="addSource" class="primary">Add</button>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h3>Production Sources</h3>
+      <div id="sourcesList" class="sources-list"></div>
     </div>
     
     <div class="buttons">
-      <button id="transferCookies" class="primary">Transfer Cookies</button>
+      <button id="manualTransfer">Manual Transfer Now</button>
       <button id="clearLocalhost">Clear Localhost Cookies</button>
     </div>
     
