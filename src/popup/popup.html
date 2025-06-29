@@ -8,7 +8,7 @@
     <div class="container">
       <!-- Add URL Section -->
       <div class="section">
-        <label for="newSourceUrl">Add a new URL</label>
+        <label for="newSourceUrl">Add a new URL:</label>
         <div class="input-group">
           <input
             type="text"
@@ -25,23 +25,16 @@
         <div id="sourcesList" class="sources-list"></div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="section">
         <button id="clearLocalhost">Clear Localhost Cookies</button>
         <button id="manualTransfer">Manual Transfer Now</button>
       </div>
-
-      <!-- Status -->
-      <div id="status" class="status"></div>
-
-      <!-- Pause Extension -->
       <div class="section">
         <div class="auto-transfer-toggle">
-          <label for="autoTransferEnabled">
-            <input type="checkbox" id="autoTransferEnabled" />
-            Enable auto-transfer
+          <label for="isExtensionPaused">
+            <span></span>Pause extension</span>
           </label>
-          <small>Automatically copy cookies when you visit localhost</small>
+          <input type="checkbox" id="isExtensionPaused" />
         </div>
       </div>
     </div>
