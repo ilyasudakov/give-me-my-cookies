@@ -27,7 +27,7 @@ class CookieTransferNotifications {
 
   init() {
     this.setupMessageListener();
-    console.log('🍪 Cookie Transfer Tool is active on this localhost page');
+    console.log('🍪 Cookie Transfer Tool is active on this localhost page:', window.location.href);
   }
 
   createNotificationContainer() {
@@ -156,6 +156,8 @@ class CookieTransferNotifications {
 
   setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('📨 Content script received message:', message.action);
+      
       if (message.action === 'showTransferStart') {
         const notificationId = this.showNotification(
           'loading',

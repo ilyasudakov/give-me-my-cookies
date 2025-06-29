@@ -196,11 +196,10 @@ input[type="text"]:focus {
 
 /* Status */
 .status {
-  margin: 12px 0;
-  padding: 12px 16px;
+  width: fit-content;
+  padding: 8px 16px;
   border-radius: 8px;
-  font-size: 13px;
-  min-height: 20px;
+  font-size: 12px;
 }
 
 .status.success {
@@ -229,7 +228,7 @@ input[type="text"]:focus {
   padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  background-color: #fff;
+  background-color: #fffdcf;
 }
 
 .auto-transfer-toggle label {

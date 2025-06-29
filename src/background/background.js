@@ -129,6 +129,7 @@ async function performAutoTransfer(localhostUrl) {
 
 async function performManualTransfer() {
   try {
+    console.log('🚀 Manual transfer started');
     const result = await chrome.storage.local.get({ sourceUrls: [] });
     const enabledSources = result.sourceUrls.filter(source => source.enabled);
     
@@ -351,6 +352,7 @@ async function transferCookiesFromSource(sourceUrl, targetUrl) {
 
 async function clearLocalhostCookies() {
   try {
+    console.log('🧹 Clear localhost cookies started');
     // Show clear start notification
     const notificationResponse = await sendNotificationToTabs('showClearStart', {});
     
@@ -417,18 +419,29 @@ async function sendNotificationToTabs(action, data) {
       url: ['http://localhost/*', 'https://localhost/*', 'http://127.0.0.1/*', 'https://127.0.0.1/*'] 
     });
     
+    console.log(`🔍 sendNotificationToTabs: Found ${tabs.length} localhost tabs for action: ${action}`);
+    
+    if (tabs.length === 0) {
+      console.log('⚠️ No localhost tabs found. Open a localhost page to see notifications.');
+      return null;
+    }
+    
     let lastResponse = null;
     
     for (const tab of tabs) {
       try {
+        console.log(`📤 Sending ${action} notification to tab ${tab.id}: ${tab.url}`);
         const response = await chrome.tabs.sendMessage(tab.id, {
           action,
           ...data
         });
-        if (response) lastResponse = response;
+        if (response) {
+          console.log(`✅ Notification sent successfully to tab ${tab.id}`);
+          lastResponse = response;
+        }
       } catch (error) {
         // Tab might not have content script loaded, ignore
-        console.log('Could not send notification to tab:', tab.id);
+        console.log(`❌ Could not send notification to tab ${tab.id}: ${error.message}`);
       }
     }
     
