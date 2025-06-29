@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Cookie Transfer Tool",
+  "version": "1.0",
+  "description": "Transfer cookies from production to localhost for easier frontend testing",
+  "permissions": [
+    "cookies",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "https://localhost/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Transfer Cookies"
+  },
+  "icons": {
+    "16": "./assets/icon16.png",
+    "48": "./assets/icon48.png",
+    "128": "./assets/icon128.png"
+  }
+} 
