@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const autoTransferToggle = document.getElementById('autoTransferEnabled');
   const sourcesListDiv = document.getElementById('sourcesList');
   const statusDiv = document.getElementById('status');
-  const recentTransfersDiv = document.getElementById('recentTransfers');
 
   // Function definitions first
   function showStatus(message, type = 'info') {
@@ -112,51 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  async function loadRecentTransfers() {
-    try {
-      const result = await chrome.storage.local.get({ recentTransfers: [] });
-      const transfers = result.recentTransfers;
-      
-      if (transfers.length === 0) {
-        recentTransfersDiv.innerHTML = '<div style="color: #999; font-style: italic;">No recent transfers</div>';
-        return;
-      }
-      
-      recentTransfersDiv.innerHTML = transfers.map(transfer => {
-        const date = new Date(transfer.timestamp);
-        
-        if (transfer.sourceUrl) {
-          // Legacy format - single source
-          const sourceHost = new URL(transfer.sourceUrl).host;
-          return `
-            <div class="transfer-item">
-              <div class="transfer-time">${date.toLocaleString()}</div>
-              <div class="transfer-details">
-                ${sourceHost} → localhost (${transfer.count} cookies)
-              </div>
-            </div>
-          `;
-        } else {
-          // New format - multiple sources
-          return `
-            <div class="transfer-item">
-              <div class="transfer-time">${date.toLocaleString()}</div>
-              <div class="transfer-details">
-                Auto-transfer: ${transfer.sourceCount} sources → localhost (${transfer.totalCookies} cookies)
-              </div>
-            </div>
-          `;
-        }
-      }).join('');
-    } catch (error) {
-      console.error('Error loading recent transfers:', error);
-      recentTransfersDiv.innerHTML = '<div style="color: #999;">Error loading history</div>';
-    }
-  }
-
   // Load initial data on popup open
   loadSourcesList();
-  loadRecentTransfers();
   loadAutoTransferSetting();
 
   // Auto-transfer toggle
@@ -236,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (result.success) {
         showStatus(`Successfully transferred ${result.totalCookies} cookies from ${result.sourceCount} sources`, 'success');
-        loadRecentTransfers();
       } else {
         showStatus('Transfer failed: ' + result.error, 'error');
       }

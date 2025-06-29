@@ -16,7 +16,7 @@
     "https://*/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   },
   "content_scripts": [
     {
@@ -26,12 +26,13 @@
         "http://127.0.0.1/*",
         "https://127.0.0.1/*"
       ],
-      "js": ["content-script.js"],
+      "js": ["src/content/notification.js"],
+      "css": ["src/content/notification.css"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_title": "Transfer Cookies"
   },
   "icons": {
