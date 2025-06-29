@@ -125,20 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
     showStatus(autoTransferToggle.checked ? 'Auto-transfer enabled' : 'Auto-transfer disabled', 'info');
   });
 
-  // Detect current tab URL
-  detectSourceBtn.addEventListener('click', async function() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.url) {
-        const url = new URL(tab.url);
-        newSourceUrlInput.value = `${url.protocol}//${url.host}`;
-        showStatus('Current tab URL detected', 'info');
-      }
-    } catch (error) {
-      showStatus('Error detecting current tab: ' + error.message, 'error');
-    }
-  });
-
   // Add source URL
   addSourceBtn.addEventListener('click', async function() {
     const sourceUrl = newSourceUrlInput.value.trim();

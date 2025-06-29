@@ -6,23 +6,22 @@
   </head>
   <body>
     <div class="container">
-      <h2>Cookie Transfer Tool</h2>
-
       <!-- Add URL Section -->
       <div class="section">
-        <label for="newSourceUrl">Add Production URL:</label>
-        <input
-          type="text"
-          id="newSourceUrl"
-          placeholder="https://example.com"
-        />
-        <button id="addSource" class="primary">Add</button>
-        <button id="detectSource">Add current URL</button>
+        <label for="newSourceUrl">Add a new URL</label>
+        <div class="input-group">
+          <input
+            type="text"
+            id="newSourceUrl"
+            placeholder="https://example.com"
+          />
+          <button id="addSource">+</button>
+        </div>
       </div>
 
       <!-- URLs List -->
       <div class="section">
-        <h3>Production Sources</h3>
+        <span>Enabled URLs:</span>
         <div id="sourcesList" class="sources-list"></div>
       </div>
 
