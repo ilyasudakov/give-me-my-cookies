@@ -16,6 +16,8 @@
   max-height: 90vh !important;
   overflow: hidden !important;
   backdrop-filter: blur(10px) !important;
+  cursor: move !important;
+  user-select: none !important;
 }
 
 .cookie-panel * {
@@ -24,50 +26,40 @@
   padding: 0 !important;
 }
 
-.cookie-panel-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 16px 20px !important;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-  color: white !important;
-  border-radius: 12px 12px 0 0 !important;
-  cursor: grab !important;
-  user-select: none !important;
+/* Hover control panel */
+.cookie-panel-hover-controls {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+  z-index: 10 !important;
 }
 
-.cookie-panel-header:active {
-  cursor: grabbing !important;
+.cookie-panel:hover .cookie-panel-hover-controls {
+  opacity: 1 !important;
 }
 
-.cookie-panel-title {
-  font-weight: 600 !important;
-  font-size: 16px !important;
-}
-
-.cookie-panel-controls {
-  display: flex !important;
-  gap: 8px !important;
-}
-
-.cookie-panel-controls button {
+.cookie-panel-hover-controls button {
   width: 24px !important;
   height: 24px !important;
   border: none !important;
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
   color: white !important;
-  border-radius: 4px !important;
+  border-radius: 50% !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   font-size: 14px !important;
   font-weight: bold !important;
-  transition: background-color 0.2s !important;
+  transition: all 0.2s !important;
+  backdrop-filter: blur(4px) !important;
 }
 
-.cookie-panel-controls button:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+.cookie-panel-hover-controls button:hover {
+  background: rgba(220, 38, 38, 0.8) !important;
+  transform: scale(1.1) !important;
 }
 
 .cookie-panel-content {

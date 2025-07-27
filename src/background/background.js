@@ -26,11 +26,20 @@ async function isTabIncognito(tabId) {
 
 // Listen for navigation to localhost
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  console.log('🔍 Tab updated:', {
+    tabId,
+    status: changeInfo.status,
+    url: tab.url,
+    changeInfo
+  });
+  
   if (changeInfo.status === 'complete' && tab.url) {
     if (isLocalhostUrl(tab.url)) {
-      console.log('Localhost detected, initiating auto-transfer:', tab.url);
+      console.log('🏠 Localhost detected, initiating auto-transfer:', tab.url);
+      console.log('🔢 Tab details:', { tabId, incognito: tab.incognito });
       const storeId = await getCookieStoreForTab(tabId);
       const isIncognito = await isTabIncognito(tabId);
+      console.log('💾 Store info:', { storeId, isIncognito });
       await performAutoTransfer(tab.url, storeId, isIncognito);
     }
   }
@@ -92,25 +101,33 @@ function isLocalhostUrl(url) {
 }
 
 async function performAutoTransfer(localhostUrl, targetStoreId = null, isIncognitoTarget = false) {
+  let notificationResponse = null;
   try {
+    console.log(`🚀 Auto-transfer starting for ${localhostUrl} (incognito: ${isIncognitoTarget})`);
+    
     const result = await chrome.storage.local.get({ sourceUrls: [] });
     
     const enabledSources = result.sourceUrls.filter(source => source.enabled);
     
     if (enabledSources.length === 0) {
+      console.log('🚫 No enabled sources found, skipping auto-transfer');
       return;
     }
     
-    console.log(`Auto-transferring cookies from ${enabledSources.length} sources to ${localhostUrl} (incognito: ${isIncognitoTarget})`);
+    console.log(`🍪 Auto-transferring cookies from ${enabledSources.length} sources to ${localhostUrl}`);
     
     // Show transfer start notification
-    const notificationResponse = await sendNotificationToTabs('showTransferStart', {
+    notificationResponse = await sendNotificationToTabs('showTransferStart', {
       sourceCount: enabledSources.length,
       type: 'auto',
       isIncognito: isIncognitoTarget
     });
     
+    console.log(`📢 Start notification sent, ID: ${notificationResponse?.notificationId}`);
+    
     const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl, targetStoreId, isIncognitoTarget);
+    
+    console.log(`🔄 Transfer result:`, transferResult);
     
     if (transferResult.success && transferResult.totalCookies > 0) {
       // Save to recent transfers
@@ -134,26 +151,34 @@ async function performAutoTransfer(localhostUrl, targetStoreId = null, isIncogni
       
       console.log(`Auto-transfer completed: ${transferResult.totalCookies} cookies transferred (${transferResult.totalCopied || 0} copied, ${transferResult.totalUpdated || 0} updated), ${transferResult.totalSkipped || 0} skipped from ${transferResult.sourceCount} sources`);
     } else if (transferResult.success && transferResult.totalCookies === 0) {
-      // All cookies already existed - hide the loading notification but don't show success
+      // All cookies already existed - show a brief success message instead of just hiding
+      console.log(`✅ Auto-transfer completed: All cookies up to date (${transferResult.totalSkipped || 0} already existed)`);
+      
       if (notificationResponse?.notificationId) {
-        await sendNotificationToTabs('hideNotification', {
+        await sendNotificationToTabs('showTransferComplete', {
+          totalCookies: 0,
+          copiedCookies: 0,
+          updatedCookies: 0,
+          skippedCookies: transferResult.totalSkipped || 0,
+          sourceCount: transferResult.sourceCount,
           notificationId: notificationResponse.notificationId
         });
       }
-      console.log(`Auto-transfer completed: No cookies needed transfer, ${transferResult.totalSkipped || 0} already existed (${transferResult.totalCopied || 0} copied, ${transferResult.totalUpdated || 0} updated) from ${transferResult.sourceCount} sources`);
     } else {
       // Show error notification
+      console.log(`❌ Auto-transfer failed:`, transferResult);
       await sendNotificationToTabs('showTransferError', {
         error: transferResult.error || 'Transfer failed',
         notificationId: notificationResponse?.notificationId
       });
     }
   } catch (error) {
-    console.error('Auto-transfer error:', error);
+    console.error('❌ Auto-transfer error:', error);
     
     // Show error notification
     await sendNotificationToTabs('showTransferError', {
-      error: error.message || 'An unexpected error occurred'
+      error: error.message || 'An unexpected error occurred',
+      notificationId: notificationResponse?.notificationId
     });
   }
 }
@@ -498,6 +523,7 @@ async function sendNotificationToTabs(action, data) {
     });
     
     console.log(`🔍 sendNotificationToTabs: Found ${tabs.length} localhost tabs for action: ${action}`);
+    console.log('🗺 Tab details:', tabs.map(t => ({ id: t.id, url: t.url, incognito: t.incognito })));
     
     if (tabs.length === 0) {
       console.log('⚠️ No localhost tabs found. Open a localhost page to see notifications.');
@@ -505,6 +531,7 @@ async function sendNotificationToTabs(action, data) {
     }
     
     let lastResponse = null;
+    let successCount = 0;
     
     for (const tab of tabs) {
       try {
@@ -514,14 +541,17 @@ async function sendNotificationToTabs(action, data) {
           ...data
         });
         if (response) {
-          console.log(`✅ Notification sent successfully to tab ${tab.id}`);
+          console.log(`✅ Notification sent successfully to tab ${tab.id}, response:`, response);
           lastResponse = response;
+          successCount++;
         }
       } catch (error) {
         // Tab might not have content script loaded, ignore
         console.log(`❌ Could not send notification to tab ${tab.id}: ${error.message}`);
       }
     }
+    
+    console.log(`📊 Notification summary: ${successCount}/${tabs.length} tabs received notification`);
     
     return lastResponse;
   } catch (error) {

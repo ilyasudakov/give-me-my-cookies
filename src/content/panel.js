@@ -2,7 +2,18 @@
 (function() {
   'use strict';
   
+  // Add detailed logging for debugging duplicate scripts
+  const scriptInstanceId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   console.log('🍪 Cookie Extension content script loaded on:', window.location.href);
+  console.log('🆔 Script instance ID:', scriptInstanceId);
+  console.log('🔍 Existing panel:', !!window.cookieExtensionPanel);
+  
+  // Prevent multiple script instances
+  if (window.cookieExtensionPanel) {
+    console.log('🚫 Panel script already loaded, skipping duplicate');
+    return;
+  }
+  window.cookieExtensionPanel = { instanceId: scriptInstanceId };
   
   let panel = null;
   let isVisible = false;
@@ -12,14 +23,8 @@
   // Panel HTML structure (adapted from popup.html)
   const panelHTML = `
     <div id="cookie-extension-panel" class="cookie-panel">
-      <div class="cookie-panel-header">
-        <div class="cookie-panel-title">
-          <span>🍪 Cookie Transfer</span>
-        </div>
-        <div class="cookie-panel-controls">
-          <button id="cookie-panel-minimize" title="Minimize">−</button>
-          <button id="cookie-panel-close" title="Close">×</button>
-        </div>
+      <div class="cookie-panel-hover-controls">
+        <button id="cookie-panel-close" title="Close panel">×</button>
       </div>
       
       <div class="cookie-panel-content">
@@ -96,18 +101,7 @@
   
   // Setup panel control buttons
   function setupPanelControls() {
-    const minimizeBtn = panel.querySelector('#cookie-panel-minimize');
     const closeBtn = panel.querySelector('#cookie-panel-close');
-    const content = panel.querySelector('.cookie-panel-content');
-    const status = panel.querySelector('#status');
-    
-    minimizeBtn.addEventListener('click', () => {
-      const isMinimized = content.style.display === 'none';
-      content.style.setProperty('display', isMinimized ? 'block' : 'none', 'important');
-      status.style.setProperty('display', isMinimized ? 'block' : 'none', 'important');
-      minimizeBtn.textContent = isMinimized ? '−' : '+';
-      minimizeBtn.title = isMinimized ? 'Minimize' : 'Expand';
-    });
     
     closeBtn.addEventListener('click', () => {
       hidePanel();
@@ -116,20 +110,39 @@
   
   // Setup drag and drop for panel
   function setupDragAndDrop() {
-    const header = panel.querySelector('.cookie-panel-header');
+    let dragStarted = false;
     
-    header.addEventListener('mousedown', (e) => {
+    panel.addEventListener('mousedown', (e) => {
+      // Don't drag if clicking on interactive elements
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || 
+          e.target.closest('button') || e.target.closest('input') ||
+          e.target.closest('.cookie-panel-hover-controls')) {
+        return;
+      }
+      
       isDragging = true;
+      dragStarted = false;
       const rect = panel.getBoundingClientRect();
       dragOffset.x = e.clientX - rect.left;
       dragOffset.y = e.clientY - rect.top;
       
-      header.style.cursor = 'grabbing';
+      panel.style.cursor = 'grabbing';
       e.preventDefault();
     });
     
     document.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
+      
+      // Start dragging only after moving a few pixels to prevent accidental drags
+      if (!dragStarted) {
+        const distance = Math.sqrt(
+          Math.pow(e.clientX - (panel.getBoundingClientRect().left + dragOffset.x), 2) +
+          Math.pow(e.clientY - (panel.getBoundingClientRect().top + dragOffset.y), 2)
+        );
+        
+        if (distance < 5) return; // Threshold for drag start
+        dragStarted = true;
+      }
       
       const x = e.clientX - dragOffset.x;
       const y = e.clientY - dragOffset.y;
@@ -145,7 +158,8 @@
     document.addEventListener('mouseup', () => {
       if (isDragging) {
         isDragging = false;
-        header.style.cursor = 'grab';
+        dragStarted = false;
+        panel.style.cursor = 'move';
       }
     });
   }
@@ -230,15 +244,23 @@
   
   async function setCurrentTabInfo() {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.url) {
-        const url = new URL(tab.url);
-        const newSourceUrlInput = panel.querySelector('#newSourceUrl');
+      // Content scripts don't have access to chrome.tabs.query, use window.location instead
+      const url = new URL(window.location.href);
+      const newSourceUrlInput = panel.querySelector('#newSourceUrl');
+      if (newSourceUrlInput) {
         newSourceUrlInput.placeholder = url.protocol + '//' + url.hostname;
-        
-        updateIncognitoStatus(tab.incognito);
-        logInitialState(tab, url);
       }
+      
+      // We can't detect incognito from content script, so assume normal mode
+      updateIncognitoStatus(false);
+      
+      // Create a mock tab object for logging
+      const mockTab = {
+        incognito: false, // We can't detect this from content script
+        id: 'unknown',
+        url: window.location.href
+      };
+      logInitialState(mockTab, url);
     } catch (error) {
       console.error('Error getting current tab info:', error);
     }
@@ -666,15 +688,15 @@
   }
   
   // Initialize when DOM is ready
-  console.log('🍪 Document ready state:', document.readyState);
+  console.log('🍪 Document ready state:', document.readyState, 'Instance:', scriptInstanceId);
   if (document.readyState === 'loading') {
-    console.log('🍪 Waiting for DOMContentLoaded...');
+    console.log('🍪 Waiting for DOMContentLoaded...', 'Instance:', scriptInstanceId);
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('🍪 DOMContentLoaded fired, initializing panel');
+      console.log('🍪 DOMContentLoaded fired, initializing panel', 'Instance:', scriptInstanceId);
       initPanel();
     });
   } else {
-    console.log('🍪 DOM already ready, initializing panel immediately');
+    console.log('🍪 DOM already ready, initializing panel immediately', 'Instance:', scriptInstanceId);
     initPanel();
   }
   

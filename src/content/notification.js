@@ -1,19 +1,39 @@
 // Content script for showing transfer notifications on localhost pages
 class CookieTransferNotifications {
   constructor() {
+    // Add detailed logging for debugging
+    console.log('🔍 CookieTransferNotifications constructor called');
+    console.log('🔍 Current URL:', window.location.href);
+    console.log('🔍 Document readyState:', document.readyState);
+    console.log('🔍 Existing instance check:', !!window.cookieTransferNotifications);
+    
     // Only run on localhost pages
     if (!this.isLocalhostPage()) {
+      console.log('🚫 Not a localhost page, skipping notification system');
       return;
     }
 
+    // Prevent multiple instances
+    if (window.cookieTransferNotifications) {
+      console.log('🚫 Cookie notification system already initialized, skipping');
+      console.log('🚫 Existing instance:', window.cookieTransferNotifications);
+      return;
+    }
+    
+    console.log('✅ Creating new CookieTransferNotifications instance');
+    window.cookieTransferNotifications = this;
+
     this.notificationContainer = null;
     this.notificationCounter = 0;
+    this.instanceId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     this.iconContent = {
       'loading': '⚡',
       'success': '✓',
       'error': '✗'
     };
 
+    console.log('🎯 Initializing Cookie Transfer Notifications on:', window.location.href);
+    console.log('🆔 Instance ID:', this.instanceId);
     this.init();
   }
 
@@ -40,9 +60,17 @@ class CookieTransferNotifications {
   }
 
   showNotification(type, message, details = '', autoHide = true) {
+    console.log('🔔 showNotification called:', {
+      type,
+      message,
+      instanceId: this.instanceId,
+      notificationCounter: this.notificationCounter
+    });
+    
     this.createNotificationContainer();
     
     const notificationId = ++this.notificationCounter;
+    console.log('🆔 Creating notification with ID:', notificationId, 'for instance:', this.instanceId);
     const notification = this.createNotificationElement(notificationId, type, message, details);
     
     this.notificationContainer.appendChild(notification);
@@ -127,8 +155,15 @@ class CookieTransferNotifications {
   }
 
   updateNotification(notificationId, type, message, details = '') {
+    console.log(`🔄 Updating notification ${notificationId} to type: ${type}, message: ${message}`);
+    
     const notification = document.getElementById(`notification-${notificationId}`);
-    if (!notification) return;
+    if (!notification) {
+      console.error(`❌ Notification element not found: notification-${notificationId}`);
+      return;
+    }
+    
+    console.log(`✅ Found notification element, updating content`);
     
     // Clear existing content
     notification.innerHTML = '';
@@ -140,6 +175,8 @@ class CookieTransferNotifications {
       notification.appendChild(newContent.firstChild);
     }
     
+    console.log(`✅ Notification ${notificationId} updated successfully`);
+    
     // Auto-hide success/error notifications
     if (type !== 'loading') {
       const hideDelay = type === 'error' ? 8000 : 5000;
@@ -150,8 +187,9 @@ class CookieTransferNotifications {
   }
 
   setupMessageListener() {
+    console.log('🔧 Setting up message listener for instance:', this.instanceId);
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log('📨 Content script received message:', message.action);
+      console.log('📨 Content script received message:', message.action, 'Instance:', this.instanceId);
       
       if (message.action === 'showTransferStart') {
         const notificationId = this.showNotification(
@@ -165,23 +203,36 @@ class CookieTransferNotifications {
       }
       
       if (message.action === 'showTransferComplete') {
+        console.log(`📋 Processing showTransferComplete:`, message);
+        
         const { totalCookies, copiedCookies = 0, updatedCookies = 0, skippedCookies = 0, sourceCount } = message;
         
-        // Create detailed stats message with colors (excluding skipped)
-        const stats = [];
-        if (copiedCookies > 0) stats.push(`<span class="stat-copied">${copiedCookies} added</span>`);
-        if (updatedCookies > 0) stats.push(`<span class="stat-updated">${updatedCookies} updated</span>`);
+        let successMessage;
         
-        const statsText = stats.length > 0 ? `${stats.join(', ')}` : '';
-        const successMessage = `${totalCookies} cookies (${statsText}) from ${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+        if (totalCookies === 0) {
+          // No cookies transferred, all were up to date
+          successMessage = `All cookies already up to date (${skippedCookies} existing) from ${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+        } else {
+          // Some cookies were transferred
+          const stats = [];
+          if (copiedCookies > 0) stats.push(`<span class="stat-copied">${copiedCookies} added</span>`);
+          if (updatedCookies > 0) stats.push(`<span class="stat-updated">${updatedCookies} updated</span>`);
+          
+          const statsText = stats.length > 0 ? ` (${stats.join(', ')})` : '';
+          successMessage = `${totalCookies} cookies${statsText} from ${sourceCount} source${sourceCount > 1 ? 's' : ''}`;
+        }
+        
+        console.log(`📝 Generated success message: "${successMessage}"`);
         
         if (message.notificationId) {
+          console.log(`🔄 Updating existing notification ${message.notificationId}`);
           this.updateNotification(
             message.notificationId,
             'success',
             successMessage
           );
         } else {
+          console.log(`🆕 Creating new notification`);
           this.showNotification(
             'success',
             successMessage
