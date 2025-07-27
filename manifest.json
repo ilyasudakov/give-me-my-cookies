@@ -29,12 +29,21 @@
       "js": ["src/content/notification.js"],
       "css": ["src/content/notification.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": ["src/content/panel.js"],
+      "css": ["src/content/panel.css"],
+      "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_title": "Transfer Cookies"
+    "default_title": "Toggle Cookie Panel"
   },
+  "incognito": "spanning",
   "icons": {
     "16": "./assets/icon16.png",
     "48": "./assets/icon48.png",

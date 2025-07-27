@@ -39,11 +39,11 @@ class CookieTransferNotifications {
     return this.notificationContainer;
   }
 
-  showNotification(type, title, message, details = '', autoHide = true) {
+  showNotification(type, message, details = '', autoHide = true) {
     this.createNotificationContainer();
     
     const notificationId = ++this.notificationCounter;
-    const notification = this.createNotificationElement(notificationId, type, title, message, details);
+    const notification = this.createNotificationElement(notificationId, type, message, details);
     
     this.notificationContainer.appendChild(notification);
     
@@ -65,40 +65,35 @@ class CookieTransferNotifications {
     return notificationId;
   }
 
-  createNotificationElement(notificationId, type, title, message, details) {
+  createNotificationElement(notificationId, type, message, details) {
     const notification = document.createElement('div');
     notification.className = `cookie-notification ${type}`;
     notification.id = `notification-${notificationId}`;
 
-    // Create header
-    const header = document.createElement('div');
-    header.className = 'notification-header';
+    // Create content container with icon and message
+    const content = document.createElement('div');
+    content.className = 'notification-content';
 
     const icon = document.createElement('div');
     icon.className = `notification-icon ${type}`;
     icon.textContent = this.iconContent[type];
-
-    const titleElement = document.createElement('div');
-    titleElement.className = 'notification-title';
-    titleElement.textContent = title;
-
-    const closeButton = document.createElement('button');
-    closeButton.className = 'notification-close';
-    closeButton.textContent = '×';
-    closeButton.addEventListener('click', () => notification.remove());
-
-    header.appendChild(icon);
-    header.appendChild(titleElement);
-    header.appendChild(closeButton);
 
     // Create message
     const messageElement = document.createElement('div');
     messageElement.className = 'notification-message';
     messageElement.innerHTML = message;
 
+    const closeButton = document.createElement('button');
+    closeButton.className = 'notification-close';
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', () => notification.remove());
+
+    content.appendChild(icon);
+    content.appendChild(messageElement);
+    content.appendChild(closeButton);
+
     // Assemble notification
-    notification.appendChild(header);
-    notification.appendChild(messageElement);
+    notification.appendChild(content);
 
     // Add details if provided
     if (details) {
@@ -131,7 +126,7 @@ class CookieTransferNotifications {
     }
   }
 
-  updateNotification(notificationId, type, title, message, details = '') {
+  updateNotification(notificationId, type, message, details = '') {
     const notification = document.getElementById(`notification-${notificationId}`);
     if (!notification) return;
     
@@ -140,7 +135,7 @@ class CookieTransferNotifications {
     notification.className = `cookie-notification ${type} show`;
     
     // Recreate content with new data
-    const newContent = this.createNotificationElement(notificationId, type, title, message, details);
+    const newContent = this.createNotificationElement(notificationId, type, message, details);
     while (newContent.firstChild) {
       notification.appendChild(newContent.firstChild);
     }
@@ -161,8 +156,8 @@ class CookieTransferNotifications {
       if (message.action === 'showTransferStart') {
         const notificationId = this.showNotification(
           'loading',
-          'Cookie Transfer Started',
           `Copying cookies from ${message.sourceCount} source${message.sourceCount > 1 ? 's' : ''}...`,
+          '', // No details
           false // Don't auto-hide loading notifications
         );
         
@@ -184,13 +179,11 @@ class CookieTransferNotifications {
           this.updateNotification(
             message.notificationId,
             'success',
-            'Cookies Transferred Successfully',
             successMessage
           );
         } else {
           this.showNotification(
             'success',
-            'Cookies Transferred Successfully',
             successMessage
           );
         }
@@ -203,13 +196,11 @@ class CookieTransferNotifications {
           this.updateNotification(
             message.notificationId,
             'error',
-            'Cookie Transfer Failed',
             message.error || 'An error occurred during transfer'
           );
         } else {
           this.showNotification(
             'error',
-            'Cookie Transfer Failed',
             message.error || 'An error occurred during transfer'
           );
         }
@@ -229,9 +220,8 @@ class CookieTransferNotifications {
       if (message.action === 'showClearStart') {
         const notificationId = this.showNotification(
           'loading',
-          'Clearing Local Cookies',
           'Removing cookies from localhost...',
-          'Manual clear operation',
+          '', // No details
           false // Don't auto-hide loading notifications
         );
         
@@ -246,13 +236,11 @@ class CookieTransferNotifications {
           this.updateNotification(
             message.notificationId,
             'success',
-            'Local Cookies Cleared',
             successMessage
           );
         } else {
           this.showNotification(
             'success',
-            'Local Cookies Cleared',
             successMessage
           );
         }
@@ -265,13 +253,11 @@ class CookieTransferNotifications {
           this.updateNotification(
             message.notificationId,
             'error',
-            'Clear Operation Failed',
             message.error || 'An error occurred while clearing cookies'
           );
         } else {
           this.showNotification(
             'error',
-            'Clear Operation Failed',
             message.error || 'An error occurred while clearing cookies'
           );
         }

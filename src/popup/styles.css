@@ -84,6 +84,7 @@ input[type="text"]:focus {
 /* Sources list */
 .sources-list {
   margin-top: 12px;
+  margin-bottom: 4px;
 }
 
 .source-item {
@@ -95,40 +96,6 @@ input[type="text"]:focus {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   transition: border-color 0.2s;
-}
-
-.source-item:before {
-  content: "⋮⋮";
-  color: #9ca3af;
-  font-size: 16px;
-  margin-right: 12px;
-  cursor: grab;
-  line-height: 1;
-  letter-spacing: -2px;
-  user-select: none;
-  transition: color 0.2s;
-}
-
-.source-item:hover:before {
-  color: #6b7280;
-}
-
-.source-item.disabled {
-  opacity: 0.5;
-  background-color: #f9fafb;
-}
-
-.source-item.dragging {
-  opacity: 0.5;
-  transform: rotate(2deg);
-  cursor: grabbing;
-}
-
-.source-item.drag-over {
-  border-color: #ff6b35;
-  background-color: #fff7ed;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
 }
 
 .source-url {
@@ -285,4 +252,29 @@ input[type="checkbox"]:checked:before {
   background-color: #f9fafb;
   border-radius: 8px;
   border: 1px dashed #d1d5db;
+}
+
+/* Incognito toggle styling */
+.incognito-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+}
+
+.incognito-toggle label {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  color: #374151;
+}
+
+.incognito-status {
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+  text-align: center;
 }

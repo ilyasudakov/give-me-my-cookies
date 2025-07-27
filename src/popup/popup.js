@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const manualTransferBtn = document.getElementById('manualTransfer');
   const clearBtn = document.getElementById('clearLocalhost');
   const pauseExtensionToggle = document.getElementById('isExtensionPaused');
+  const useIncognitoToggle = document.getElementById('useIncognito');
+  const incognitoStatusDiv = document.getElementById('incognitoStatus');
   const sourcesListDiv = document.getElementById('sourcesList');
   const statusDiv = document.getElementById('status');
 
@@ -36,10 +38,101 @@ document.addEventListener('DOMContentLoaded', function() {
       if (tab && tab.url) {
         const url = new URL(tab.url);
         newSourceUrlInput.placeholder = url.protocol + '//' + url.hostname;
+        
+        // Update incognito status
+        updateIncognitoStatus(tab.incognito);
+        
+        // Log initial state summary
+        logInitialState(tab, url);
       }
     } catch (error) {
       console.error('Error getting current tab for placeholder:', error);
       // Keep default placeholder if there's an error
+    }
+  }
+
+  function logInitialState(tab, url) {
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(url.hostname) || 
+                       url.hostname.endsWith('.localhost') || 
+                       url.hostname.startsWith('localhost.');
+    
+    console.log('🍪 Cookie Extension - Initial State Summary:');
+    console.log(`├─ Window Type: ${tab.incognito ? '🕵️ Incognito' : '👤 Normal'}`);
+    console.log(`├─ Current URL: ${url.href}`);
+    console.log(`├─ Domain: ${url.hostname}`);
+    console.log(`├─ Is Localhost: ${isLocalhost ? '✅ Yes' : '❌ No'}`);
+    console.log(`├─ Protocol: ${url.protocol}`);
+    console.log(`└─ Tab ID: ${tab.id}`);
+    
+    if (isLocalhost) {
+      console.log('🎯 Localhost detected - ready for cookie transfer!');
+    } else {
+      console.log('🌐 Production site - add to sources for cookie transfer');
+    }
+  }
+
+  function updateIncognitoStatus(isIncognito) {
+    if (isIncognito) {
+      incognitoStatusDiv.textContent = 'Current window: Incognito mode';
+      incognitoStatusDiv.style.color = '#6366f1';
+      useIncognitoToggle.checked = true;
+    } else {
+      incognitoStatusDiv.textContent = 'Current window: Normal mode';
+      incognitoStatusDiv.style.color = '#6b7280';
+      useIncognitoToggle.checked = false;
+    }
+  }
+
+  async function getCurrentTabIncognitoState() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      return tab ? tab.incognito : false;
+    } catch (error) {
+      console.error('Error getting current tab incognito state:', error);
+      return false;
+    }
+  }
+
+  async function getCookieStoreForTab(tabId) {
+    try {
+      const cookieStores = await chrome.cookies.getAllCookieStores();
+      const store = cookieStores.find(store => store.tabIds.includes(tabId));
+      return store ? store.id : null;
+    } catch (error) {
+      console.error('Error getting cookie store for tab:', error);
+      return null;
+    }
+  }
+
+  async function logExtensionSettings() {
+    try {
+      console.log('\n⚙️ Extension Settings:');
+      
+      // Get storage settings
+      const storage = await chrome.storage.local.get();
+      console.log(`├─ Auto-transfer enabled: ${!storage.isExtensionPaused ? '✅ Yes' : '❌ No'}`);
+      console.log(`├─ Source URLs count: ${storage.sourceUrls?.length || 0}`);
+      
+      if (storage.sourceUrls?.length > 0) {
+        console.log('├─ Configured sources:');
+        storage.sourceUrls.forEach((source, index) => {
+          const status = source.enabled ? '✅' : '❌';
+          console.log(`│  ${index + 1}. ${status} ${source.url}`);
+        });
+      }
+      
+      // Get cookie stores
+      const cookieStores = await chrome.cookies.getAllCookieStores();
+      console.log(`├─ Available cookie stores: ${cookieStores.length}`);
+      cookieStores.forEach((store, index) => {
+        const storeType = store.tabIds.length === 0 ? '🕵️ Incognito' : '👤 Normal';
+        console.log(`│  Store ${index + 1}: ${storeType} (ID: ${store.id}, Tabs: ${store.tabIds.length})`);
+      });
+      
+      console.log('└─ Extension ready!\n');
+      
+    } catch (error) {
+      console.error('Error logging extension settings:', error);
     }
   }
 
@@ -185,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadSourcesList();
   loadAutoTransferSetting();
   setCurrentTabPlaceholder();
+  logExtensionSettings();
 
   // Auto-transfer toggle
   pauseExtensionToggle.addEventListener('change', async function() {
@@ -259,10 +353,19 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       manualTransferBtn.disabled = true;
       manualTransferBtn.textContent = 'Transferring...';
-      showStatus('Starting manual transfer...', 'info');
+      
+      const isIncognito = useIncognitoToggle.checked;
+      const modeText = isIncognito ? ' (incognito mode)' : ' (normal mode)';
+      showStatus('Starting manual transfer' + modeText + '...', 'info');
+
+      // Get current tab info for store ID
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const storeId = tab ? await getCookieStoreForTab(tab.id) : null;
 
       const result = await chrome.runtime.sendMessage({
-        action: 'manualTransfer'
+        action: 'manualTransfer',
+        storeId: isIncognito ? storeId : null,
+        isIncognito: isIncognito
       });
 
       if (result.success && result.totalCookies > 0) {

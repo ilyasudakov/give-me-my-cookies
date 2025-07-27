@@ -7,7 +7,7 @@
   <body>
     <div class="container">
       <div class="section">
-        <span>Transfer cookies from:</span>
+        <span>Transfer cookies from:</span>/
         <div id="sourcesList" class="sources-list"></div>
         <div class="input-group">
           <input
@@ -22,6 +22,16 @@
       <div class="section">
         <button id="clearLocalhost">Clear local cookies</button>
         <button id="manualTransfer">Run manual transfer</button>
+      </div>
+      
+      <div class="section">
+        <div class="incognito-toggle">
+          <label for="useIncognito">
+            <span>🕵️ Use incognito mode cookies</span>
+          </label>
+          <input type="checkbox" id="useIncognito" />
+        </div>
+        <div id="incognitoStatus" class="incognito-status"></div>
       </div>
       <div class="section">
         <div class="auto-transfer-toggle">

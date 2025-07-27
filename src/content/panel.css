@@ -1,0 +1,517 @@
+/* Cookie Extension In-Page Panel Styles */
+.cookie-panel {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  width: 400px !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  z-index: 2147483647 !important; /* Ensure it's on top */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 14px !important;
+  color: #374151 !important;
+  display: none !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.cookie-panel * {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cookie-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+.cookie-panel-header:active {
+  cursor: grabbing !important;
+}
+
+.cookie-panel-title {
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.cookie-panel-controls {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.cookie-panel-controls button {
+  width: 24px !important;
+  height: 24px !important;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  transition: background-color 0.2s !important;
+}
+
+.cookie-panel-controls button:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.cookie-panel-content {
+  padding: 20px !important;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+}
+
+/* Section styles */
+.cookie-panel .section {
+  margin-bottom: 20px !important;
+}
+
+.cookie-panel .section:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Input group styles */
+.cookie-panel .input-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+
+.cookie-panel input[type="text"] {
+  flex: 1 !important;
+  height: 36px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  background: white !important;
+  transition: border-color 0.2s !important;
+}
+
+.cookie-panel input[type="text"]:focus {
+  outline: none !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+.cookie-panel #addSource {
+  width: 36px !important;
+  height: 36px !important;
+  background: #6366f1 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.cookie-panel #addSource:hover {
+  background: #5856eb !important;
+}
+
+/* Sources list */
+.cookie-panel .sources-list {
+  margin-top: 12px !important;
+}
+
+.cookie-panel .source-item {
+  margin: 8px 0 !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+}
+
+.cookie-panel .source-item:hover {
+  background: #f3f4f6 !important;
+}
+
+.cookie-panel .source-item.disabled {
+  opacity: 0.5 !important;
+}
+
+.cookie-panel .source-header {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px !important;
+}
+
+.cookie-panel .source-url {
+  flex: 1 !important;
+  font-size: 14px !important;
+  word-break: break-all !important;
+  color: #374151 !important;
+}
+
+.cookie-panel .source-actions {
+  display: flex !important;
+  gap: 4px !important;
+  margin-left: 12px !important;
+}
+
+.cookie-panel .source-actions button {
+  width: 24px !important;
+  height: 24px !important;
+  border: none !important;
+  background: none !important;
+  color: #9ca3af !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+}
+
+.cookie-panel .source-actions .show-cookies-btn:hover {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+
+.cookie-panel .source-actions button:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+/* Cookies list styling */
+.cookie-panel .cookies-list {
+  border-top: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cookie-panel .cookies-loading,
+.cookie-panel .no-cookies,
+.cookie-panel .cookies-error {
+  padding: 16px !important;
+  text-align: center !important;
+  color: #6b7280 !important;
+  font-style: italic !important;
+}
+
+.cookie-panel .cookies-error {
+  color: #dc2626 !important;
+}
+
+.cookie-panel .cookies-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #4b5563 !important;
+}
+
+.cookie-panel .copy-all-cookies-btn {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  background: #6366f1 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+
+.cookie-panel .copy-all-cookies-btn:hover {
+  background: #5856eb !important;
+}
+
+.cookie-panel .cookies-container {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+.cookie-panel .cookie-item {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.cookie-panel .cookie-item:last-child {
+  border-bottom: none !important;
+}
+
+.cookie-panel .cookie-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+.cookie-panel .cookie-name {
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  font-size: 13px !important;
+}
+
+.cookie-panel .cookie-actions {
+  display: flex !important;
+  gap: 4px !important;
+}
+
+.cookie-panel .cookie-actions button {
+  padding: 2px 6px !important;
+  font-size: 10px !important;
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border: none !important;
+  border-radius: 3px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.cookie-panel .cookie-actions button:hover {
+  background: #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.cookie-panel .cookie-details {
+  font-size: 12px !important;
+  color: #6b7280 !important;
+}
+
+.cookie-panel .cookie-value {
+  margin-bottom: 6px !important;
+}
+
+.cookie-panel .cookie-value-text {
+  font-family: monospace !important;
+  background: #f8fafc !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  border: 1px solid #e2e8f0 !important;
+  font-size: 11px !important;
+  word-break: break-all !important;
+}
+
+.cookie-panel .cookie-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.cookie-panel .cookie-meta span {
+  white-space: nowrap !important;
+}
+
+/* Scrollbar for cookies container */
+.cookie-panel .cookies-container::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.cookie-panel .cookies-container::-webkit-scrollbar-track {
+  background: #f8fafc !important;
+}
+
+.cookie-panel .cookies-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 2px !important;
+}
+
+.cookie-panel .cookies-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+/* Action buttons */
+.cookie-panel .section:has(#clearLocalhost) {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.cookie-panel #clearLocalhost,
+.cookie-panel #manualTransfer {
+  flex: 1 !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  background: #374151 !important;
+  color: white !important;
+}
+
+.cookie-panel #clearLocalhost:hover,
+.cookie-panel #manualTransfer:hover {
+  background: #1f2937 !important;
+}
+
+.cookie-panel #clearLocalhost:disabled,
+.cookie-panel #manualTransfer:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Toggle styles */
+.cookie-panel .incognito-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+  background: #f8fafc !important;
+}
+
+.cookie-panel .incognito-toggle label {
+  display: flex !important;
+  flex-direction: column !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.cookie-panel input[type="checkbox"] {
+  appearance: none !important;
+  width: 40px !important;
+  height: 20px !important;
+  background: #d1d5db !important;
+  border-radius: 12px !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  border: none !important;
+}
+
+.cookie-panel input[type="checkbox"]:checked {
+  background: #6366f1 !important;
+}
+
+.cookie-panel input[type="checkbox"]:before {
+  content: "" !important;
+  position: absolute !important;
+  width: 14px !important;
+  height: 14px !important;
+  background: white !important;
+  border-radius: 50% !important;
+  top: 3px !important;
+  left: 3px !important;
+  transition: transform 0.2s !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.cookie-panel input[type="checkbox"]:checked:before {
+  transform: translateX(20px) !important;
+}
+
+/* Status */
+.cookie-panel .status {
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  margin-top: 16px !important;
+  display: none !important;
+}
+
+.cookie-panel .status:not(:empty) {
+  display: block !important;
+}
+
+.cookie-panel .status.success {
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
+.cookie-panel .status.error {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+}
+
+.cookie-panel .status.info {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+/* Incognito status */
+.cookie-panel .incognito-status {
+  font-size: 12px !important;
+  margin-top: 6px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+}
+
+/* Empty state */
+.cookie-panel .empty-state {
+  text-align: center !important;
+  color: #9ca3af !important;
+  font-style: italic !important;
+  padding: 20px !important;
+  background: #f9fafb !important;
+  border-radius: 8px !important;
+  border: 1px dashed #d1d5db !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .cookie-panel {
+    width: calc(100vw - 40px) !important;
+    right: 20px !important;
+    left: 20px !important;
+  }
+}
+
+/* Animation for showing panel */
+.cookie-panel.show {
+  animation: slideIn 0.3s ease-out !important;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0 !important;
+    transform: translateX(100%) !important;
+  }
+  to {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+  }
+}
+
+/* Scrollbar styling for webkit browsers */
+.cookie-panel-content::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.cookie-panel-content::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 3px !important;
+}
+
+.cookie-panel-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 3px !important;
+}
+
+.cookie-panel-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}

@@ -1,36 +1,56 @@
 // Background service worker for cookie operations
-let autoTransferEnabled = true;
 
-// Initialize auto-transfer setting
-chrome.runtime.onStartup.addListener(async () => {
-  const result = await chrome.storage.local.get({ autoTransferEnabled: true });
-  autoTransferEnabled = result.autoTransferEnabled;
-});
+// Helper function to get cookie store for a tab
+async function getCookieStoreForTab(tabId) {
+  try {
+    const cookieStores = await chrome.cookies.getAllCookieStores();
+    const store = cookieStores.find(store => store.tabIds.includes(tabId));
+    return store ? store.id : null;
+  } catch (error) {
+    console.error('Error getting cookie store for tab:', error);
+    return null;
+  }
+}
 
-chrome.runtime.onInstalled.addListener(async () => {
-  const result = await chrome.storage.local.get({ autoTransferEnabled: true });
-  autoTransferEnabled = result.autoTransferEnabled;
-});
+// Helper function to check if tab is incognito
+async function isTabIncognito(tabId) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    return tab.incognito;
+  } catch (error) {
+    console.error('Error checking if tab is incognito:', error);
+    return false;
+  }
+}
+
 
 // Listen for navigation to localhost
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && autoTransferEnabled) {
+  if (changeInfo.status === 'complete' && tab.url) {
     if (isLocalhostUrl(tab.url)) {
       console.log('Localhost detected, initiating auto-transfer:', tab.url);
-      await performAutoTransfer(tab.url);
+      const storeId = await getCookieStoreForTab(tabId);
+      const isIncognito = await isTabIncognito(tabId);
+      await performAutoTransfer(tab.url, storeId, isIncognito);
     }
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'updateAutoTransfer') {
-    autoTransferEnabled = request.enabled;
-    sendResponse({ success: true });
-    return;
+// Handle action button clicks to toggle panel
+chrome.action.onClicked.addListener(async (tab) => {
+  console.log('🍪 Extension icon clicked, tab:', tab.id, tab.url);
+  try {
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'togglePanel' });
+    console.log('🍪 Message sent successfully, response:', response);
+  } catch (error) {
+    console.error('🍪 Error toggling panel:', error);
+    console.log('🍪 This might indicate the content script is not loaded on this page');
   }
-  
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'manualTransfer') {
-    performManualTransfer()
+    performManualTransfer(request.storeId, request.isIncognito)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
@@ -38,6 +58,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   if (request.action === 'clearCookies') {
     clearLocalhostCookies()
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep message channel open for async response
+  }
+  
+  if (request.action === 'getCookieStores') {
+    chrome.cookies.getAllCookieStores()
+      .then(stores => sendResponse({ stores }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true; // Keep message channel open for async response
+  }
+  
+  if (request.action === 'getCookiesForDomain') {
+    getCookiesForDomain(request.domain, request.useIncognito)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Keep message channel open for async response
@@ -57,13 +91,9 @@ function isLocalhostUrl(url) {
   }
 }
 
-async function performAutoTransfer(localhostUrl) {
+async function performAutoTransfer(localhostUrl, targetStoreId = null, isIncognitoTarget = false) {
   try {
-    const result = await chrome.storage.local.get({ sourceUrls: [], autoTransferEnabled: true });
-    
-    if (!result.autoTransferEnabled) {
-      return;
-    }
+    const result = await chrome.storage.local.get({ sourceUrls: [] });
     
     const enabledSources = result.sourceUrls.filter(source => source.enabled);
     
@@ -71,15 +101,16 @@ async function performAutoTransfer(localhostUrl) {
       return;
     }
     
-    console.log(`Auto-transferring cookies from ${enabledSources.length} sources to ${localhostUrl}`);
+    console.log(`Auto-transferring cookies from ${enabledSources.length} sources to ${localhostUrl} (incognito: ${isIncognitoTarget})`);
     
     // Show transfer start notification
     const notificationResponse = await sendNotificationToTabs('showTransferStart', {
       sourceCount: enabledSources.length,
-      type: 'auto'
+      type: 'auto',
+      isIncognito: isIncognitoTarget
     });
     
-    const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl);
+    const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl, targetStoreId, isIncognitoTarget);
     
     if (transferResult.success && transferResult.totalCookies > 0) {
       // Save to recent transfers
@@ -127,7 +158,7 @@ async function performAutoTransfer(localhostUrl) {
   }
 }
 
-async function performManualTransfer() {
+async function performManualTransfer(targetStoreId = null, isIncognitoTarget = false) {
   try {
     console.log('🚀 Manual transfer started');
     const result = await chrome.storage.local.get({ sourceUrls: [] });
@@ -143,10 +174,11 @@ async function performManualTransfer() {
     // Show transfer start notification
     const notificationResponse = await sendNotificationToTabs('showTransferStart', {
       sourceCount: enabledSources.length,
-      type: 'manual'
+      type: 'manual',
+      isIncognito: isIncognitoTarget
     });
     
-    const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl);
+    const transferResult = await transferFromMultipleSources(enabledSources.map(s => s.url), localhostUrl, targetStoreId, isIncognitoTarget);
     
     if (transferResult.success && transferResult.totalCookies > 0) {
       // Save to recent transfers
@@ -195,7 +227,7 @@ async function performManualTransfer() {
   }
 }
 
-async function transferFromMultipleSources(sourceUrls, targetUrl) {
+async function transferFromMultipleSources(sourceUrls, targetUrl, targetStoreId = null, isIncognitoTarget = false) {
   const results = [];
   let totalCookies = 0;
   let totalCopied = 0;
@@ -203,10 +235,43 @@ async function transferFromMultipleSources(sourceUrls, targetUrl) {
   let totalSkipped = 0;
   let successfulSources = 0;
   
+  // Get source cookie store ID based on incognito preference
+  let sourceStoreId = null;
+  if (isIncognitoTarget) {
+    // Find incognito store for source cookies
+    const cookieStores = await chrome.cookies.getAllCookieStores();
+    
+    // Check each store to find the incognito one
+    for (const store of cookieStores) {
+      if (store.tabIds.length === 0) {
+        // Empty tabIds usually indicates incognito store
+        sourceStoreId = store.id;
+        break;
+      } else {
+        // Check if any tabs in this store are incognito
+        for (const tabId of store.tabIds) {
+          try {
+            const tab = await chrome.tabs.get(tabId);
+            if (tab.incognito) {
+              sourceStoreId = store.id;
+              break;
+            }
+          } catch (error) {
+            // Tab might not exist anymore, continue
+            continue;
+          }
+        }
+        if (sourceStoreId) break;
+      }
+    }
+    
+    console.log(`Using incognito source store ID: ${sourceStoreId}`);
+  }
+  
   // Transfer from all sources in parallel for better performance
   const transferPromises = sourceUrls.map(async (sourceUrl) => {
     try {
-      const result = await transferCookiesFromSource(sourceUrl, targetUrl);
+      const result = await transferCookiesFromSource(sourceUrl, targetUrl, sourceStoreId, targetStoreId);
       results.push({ sourceUrl, result });
       if (result.success) {
         totalCookies += result.count;
@@ -250,22 +315,30 @@ async function transferFromMultipleSources(sourceUrls, targetUrl) {
   return result;
 }
 
-async function transferCookiesFromSource(sourceUrl, targetUrl) {
+async function transferCookiesFromSource(sourceUrl, targetUrl, sourceStoreId = null, targetStoreId = null) {
   try {
     const sourceHost = new URL(sourceUrl).hostname;
     const targetUrl_obj = new URL(targetUrl);
     const targetHost = targetUrl_obj.hostname;
     const targetProtocol = targetUrl_obj.protocol;
     
-    // Get all cookies from source domain
-    const sourceCookies = await chrome.cookies.getAll({ domain: sourceHost });
+    // Get all cookies from source domain with specific store
+    const sourceCookiesOptions = { domain: sourceHost };
+    if (sourceStoreId) {
+      sourceCookiesOptions.storeId = sourceStoreId;
+    }
+    const sourceCookies = await chrome.cookies.getAll(sourceCookiesOptions);
     
     if (sourceCookies.length === 0) {
-      return { success: false, error: `No cookies found for ${sourceHost}` };
+      return { success: false, error: `No cookies found for ${sourceHost}${sourceStoreId ? ' in incognito mode' : ''}` };
     }
     
-    // Get existing cookies from target domain
-    const existingCookies = await chrome.cookies.getAll({ domain: targetHost });
+    // Get existing cookies from target domain with specific store
+    const targetCookiesOptions = { domain: targetHost };
+    if (targetStoreId) {
+      targetCookiesOptions.storeId = targetStoreId;
+    }
+    const existingCookies = await chrome.cookies.getAll(targetCookiesOptions);
     
     // Create a map of existing cookies for quick lookup
     const existingCookieMap = new Map();
@@ -302,6 +375,11 @@ async function transferCookiesFromSource(sourceUrl, targetUrl) {
           httpOnly: cookie.httpOnly,
           sameSite: cookie.sameSite || 'lax'
         };
+        
+        // Add storeId if specified (for incognito)
+        if (targetStoreId) {
+          newCookie.storeId = targetStoreId;
+        }
         
         // Remove expiration for session cookies or set appropriate expiration
         if (!cookie.session && cookie.expirationDate) {
@@ -465,6 +543,69 @@ async function saveRecentTransfer(transferData) {
     await chrome.storage.local.set({ recentTransfers: transfers });
   } catch (error) {
     console.error('Error saving recent transfer:', error);
+  }
+}
+
+async function getCookiesForDomain(domain, useIncognito = false) {
+  try {
+    console.log(`🍪 Getting cookies for domain: ${domain}, incognito: ${useIncognito}`);
+    
+    let storeId = null;
+    
+    if (useIncognito) {
+      // Find incognito store
+      const cookieStores = await chrome.cookies.getAllCookieStores();
+      
+      for (const store of cookieStores) {
+        if (store.tabIds.length === 0) {
+          // Empty tabIds usually indicates incognito store
+          storeId = store.id;
+          break;
+        } else {
+          // Check if any tabs in this store are incognito
+          for (const tabId of store.tabIds) {
+            try {
+              const tab = await chrome.tabs.get(tabId);
+              if (tab.incognito) {
+                storeId = store.id;
+                break;
+              }
+            } catch (error) {
+              // Tab might not exist anymore, continue
+              continue;
+            }
+          }
+          if (storeId) break;
+        }
+      }
+      
+      console.log(`🍪 Using incognito store ID: ${storeId}`);
+    }
+    
+    // Get cookies for the domain
+    const cookieOptions = { domain: domain };
+    if (storeId) {
+      cookieOptions.storeId = storeId;
+    }
+    
+    const cookies = await chrome.cookies.getAll(cookieOptions);
+    
+    console.log(`🍪 Found ${cookies.length} cookies for ${domain}`);
+    
+    return {
+      success: true,
+      cookies: cookies,
+      domain: domain,
+      storeId: storeId
+    };
+    
+  } catch (error) {
+    console.error('🍪 Error getting cookies for domain:', error);
+    return {
+      success: false,
+      error: error.message,
+      domain: domain
+    };
   }
 }
 
