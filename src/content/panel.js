@@ -219,14 +219,6 @@
     }
   });
   
-  // Keyboard shortcut to toggle panel (Ctrl+Shift+C)
-  document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-      e.preventDefault();
-      togglePanel();
-    }
-  });
-  
   // Helper functions (adapted from popup.js)
   function showStatus(message, type = 'info') {
     const statusDiv = panel.querySelector('#status');
@@ -355,7 +347,7 @@
             <div class="source-url">${source.url}</div>
             <div class="source-actions">
               <button data-action="show-cookies" data-index="${index}" class="show-cookies-btn" title="Show cookies">
-                🍪
+                📁
               </button>
               <button data-action="remove" data-index="${index}" class="danger" title="Remove">
                 🗑️
@@ -399,7 +391,7 @@
     if (isVisible) {
       // Hide cookies list
       cookiesList.style.setProperty('display', 'none', 'important');
-      button.textContent = '🍪';
+      button.textContent = '📁';
       button.title = 'Show cookies';
     } else {
       // Show cookies list
@@ -444,49 +436,26 @@
   }
   
   function displayCookies(cookies, container) {
-    const cookiesHTML = cookies.map((cookie, index) => `
-      <div class="cookie-item" data-cookie-index="${index}">
-        <div class="cookie-header">
-          <span class="cookie-name">${cookie.name}</span>
-          <div class="cookie-actions">
-            <button class="copy-cookie-btn" data-cookie-value="${escapeHtml(cookie.value)}" title="Copy value">
-              📋
-            </button>
-            <button class="copy-cookie-full-btn" data-cookie-data="${escapeHtml(JSON.stringify(cookie))}" title="Copy full cookie">
-              📄
-            </button>
-          </div>
-        </div>
-        <div class="cookie-details">
-          <div class="cookie-value">
-            <strong>Value:</strong> 
-            <span class="cookie-value-text">${truncateValue(cookie.value)}</span>
-          </div>
-          <div class="cookie-meta">
-            <span><strong>Domain:</strong> ${cookie.domain}</span>
-            <span><strong>Path:</strong> ${cookie.path || '/'}</span>
-            <span><strong>Secure:</strong> ${cookie.secure ? 'Yes' : 'No'}</span>
-            <span><strong>HttpOnly:</strong> ${cookie.httpOnly ? 'Yes' : 'No'}</span>
-            ${cookie.sameSite ? `<span><strong>SameSite:</strong> ${cookie.sameSite}</span>` : ''}
-          </div>
-        </div>
-      </div>
-    `).join('');
-    
-    container.innerHTML = `
-      <div class="cookies-header">
-        <span>Found ${cookies.length} cookie${cookies.length !== 1 ? 's' : ''}</span>
-        <button class="copy-all-cookies-btn" data-cookies="${escapeHtml(JSON.stringify(cookies))}" title="Copy all cookies">
-          📋 Copy All
-        </button>
-      </div>
-      <div class="cookies-container">
-        ${cookiesHTML}
-      </div>
+    const cookiesHTML = `
+      <table class="cookies-table">
+        <thead>
+          <tr>
+            <th>Cookie Name</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cookies.map((cookie, index) => `
+            <tr class="cookie-row" data-cookie-index="${index}">
+              <td class="cookie-name">${escapeHtml(cookie.name)}</td>
+              <td class="cookie-value">${escapeHtml(cookie.value)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     `;
     
-    // Add copy event listeners
-    container.addEventListener('click', handleCookieCopyActions);
+    container.innerHTML = cookiesHTML;
   }
   
   function handleCookieCopyActions(event) {
